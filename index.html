@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>El chat de GDL</title>
+  <meta charset="UTF-8"/>
+
+  <script src="https://www.gstatic.com/firebasejs/3.4.0/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyAjS0m9rh9V68W5mtV6aHs8a7NRgUsM68I",
+      authDomain: "chatgdl-d604d.firebaseapp.com",
+      databaseURL: "https://chatgdl-d604d.firebaseio.com",
+      storageBucket: "chatgdl-d604d.appspot.com",
+      messagingSenderId: "565671860528"
+    };
+    firebase.initializeApp(config);
+  </script>
+
+  <style>
+    img{
+      width:50px;
+    }
+    .message:nth-child(even){
+      background:#f4f4f4q;
+    }
+
+  </style>
+</head>
+<body ng-app="chat">
+
+  <section ng-controller="chatController as vm">
+
+    <button ng-click="vm.login()" ng-if="!vm.user">Log in</button>
+    <button ng-click="vm.logout()" ng-if="vm.user">Log out</button>
+
+    <div ng-if="vm.user">
+      <input type="text" ng-model="vm.message" >
+      <button ng-click="vm.sendMessage()">Enviar</button>
+
+      <div ng-repeat="m in vm.messages" class="message">
+        <img ng-src="{{m.picture}}" >
+        <strong>{{m.user}}:</strong> {{m.message}}
+      </div>
+    </div>
+  </section>
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+  <script src="https://cdn.firebase.com/libs/angularfire/2.0.2/angularfire.min.js"></script>
+
+  <script>
+    angular
+      .module("chat",["firebase"])
+      .controller("chatController", chatController);
+
+    function chatController($firebaseArray, $firebaseAuth){
+      var ref = firebase.database().ref("chat");
+
+
+      this.auth = $firebaseAuth();
+      this.user = null;
+
+      this.auth.$onAuthStateChanged( function(user){
+        console.log(user);
+        if(user){
+          this.user = {
+            name : user.displayName,
+            picture : user.photoURL
+          }
+        }
+        this.messages = $firebaseArray(ref);
+      }.bind(this));
+
+      this.login = function(){
+        this.auth.$signInWithPopup("google").then(
+          function(result){
+            console.log(result);
+          }
+        )
+      }
+
+      this.logout = function(){
+        this.auth.$signOut();
+        this.user = null;
+      }
+
+      this.sendMessage = function(){
+        this.messages.$add(
+          {
+            message : this.message,
+            user : this.user.name,
+            picture : this.user.picture
+          }
+        );
+        this.message = "";
+      }
+    }
+
+  </script>
+
+
+
+
+</body>
+</html>
